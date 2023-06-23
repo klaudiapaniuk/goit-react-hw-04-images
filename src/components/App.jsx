@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { pixabayAPI } from '../utils/API';
 import styles from 'styles.module.css';
 
@@ -8,83 +8,75 @@ import Button from '../components/Button/Button';
 import { MoonLoader } from 'react-spinners';
 import Modal from '../components/Modal/Modal';
 
-class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    perPage: 12,
-    images: [],
-    isLoading: false,
-    showModal: false,
-    selectedImage: '',
-    hasMoreImages: false,
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(12);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [hasMoreImages, setHasMoreImages] = useState(false);
+
+  const handleSearch = query => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
+    setHasMoreImages(false);
   };
 
-  handleSearch = query => {
-    this.setState({ query, page: 1, images: [], hasMoreImages: false });
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  useEffect(() => {
+    const fetchImages = () => {
+      setIsLoading(true);
+      pixabayAPI
+        .searchImages(query, page, perPage)
+        .then(newImages => {
+          if (newImages.length === 0 && query.trim() !== '') {
+            return;
+          }
+          const hasMoreImages = newImages.length === perPage;
+          setImages(prevImages => [...prevImages, ...newImages]);
+          setHasMoreImages(hasMoreImages);
+        })
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    };
+    fetchImages();
+  }, [query, page, perPage]);
+
+  const handleImageClick = imageUrl => {
+    setShowModal(true);
+    setSelectedImage(imageUrl);
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      this.fetchImages();
-    }
-  }
-
-  fetchImages = () => {
-    const { query, page, perPage } = this.state;
-    this.setState({ isLoading: true });
-
-    pixabayAPI
-      .searchImages(query, page, perPage)
-      .then(newImages => {
-        const hasMoreImages = newImages.length === perPage;
-        this.setState(prevState => ({
-          images: [...prevState.images, ...newImages],
-          hasMoreImages,
-        }));
-      })
-      .catch(error => {
-        console.error(error);
-      })
-      .finally(() => {
-        this.setState({ isLoading: false });
-      });
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedImage('');
   };
 
-  handleImageClick = imageUrl => {
-    this.setState({ showModal: true, selectedImage: imageUrl });
-  };
+  const showLoadMoreButton = images.length > 0 && !isLoading && hasMoreImages;
 
-  handleCloseModal = () => {
-    this.setState({ showModal: false, selectedImage: '' });
-  };
-
-  render() {
-    const { images, isLoading, showModal, selectedImage, hasMoreImages } =
-      this.state;
-    const showLoadMoreButton = images.length > 0 && !isLoading && hasMoreImages;
-
-    return (
-      <div className={styles.App}>
-        <Searchbar onSearch={this.handleSearch} />
-        <ImageGallery images={images} onClickImage={this.handleImageClick} />
-        {isLoading && <MoonLoader />}
-        {showLoadMoreButton && (
-          <Button onClick={this.handleLoadMore}>Load more</Button>
-        )}
-        {showModal && (
-          <Modal imageUrl={selectedImage} onClose={this.handleCloseModal} />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className={styles.App}>
+      <Searchbar onSearch={handleSearch} />
+      <ImageGallery images={images} onClickImage={handleImageClick} />
+      {isLoading && <MoonLoader />}
+      {showLoadMoreButton && (
+        <Button onClick={handleLoadMore}>Load more</Button>
+      )}
+      {showModal && (
+        <Modal imageUrl={selectedImage} onClose={handleCloseModal} />
+      )}
+    </div>
+  );
+};
 
 export default App;

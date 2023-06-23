@@ -5,12 +5,12 @@ import styles from 'styles.module.css';
 const Searchbar = ({ onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleChange = event => {
-    setSearchQuery(event.target.value);
+  const handleChange = e => {
+    setSearchQuery(e.target.value);
   };
 
-  const handleSubmit = event => {
-    event.preventDefault();
+  const handleSubmit = e => {
+    e.preventDefault();
     if (searchQuery.trim() !== '') {
       onSearch(searchQuery);
     }
