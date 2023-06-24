@@ -11,12 +11,13 @@ import Modal from '../components/Modal/Modal';
 const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [perPage] = useState(12);
   const [images, setImages] = useState([]);
+  const [hasMoreImages, setHasMoreImages] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState('');
-  const [hasMoreImages, setHasMoreImages] = useState(false);
+
+  const perPage = 12;
 
   const handleSearch = query => {
     setQuery(query);
